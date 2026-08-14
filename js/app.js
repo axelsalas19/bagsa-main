@@ -2,6 +2,7 @@
 import { state } from './state.js';
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 import { showStatus } from './utils.js';
+import { initAuth } from './auth.js';
 import { initMap, initStyles, initLayerGroups, handleCheckboxChange } from './map.js';
 import { initSearchPanel } from './search.js';
 import { loadBaseData } from './db.js';
@@ -22,6 +23,9 @@ export function initApp() {
         const { createClient } = supabase;
         state.supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
         console.log('Supabase conectado');
+
+        // Inicializar autenticación (restaura sesión y vincula la UI de acceso)
+        initAuth();
 
         // Inicializar componentes del mapa y estilos
         initMap();

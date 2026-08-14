@@ -2,6 +2,7 @@
 import { state } from './state.js';
 import { SUPABASE_URL, SUPABASE_KEY, ARBA_WMS_URL, ARBA_WMS_LAYER } from './config.js';
 import { showStatus, obtenerColorRuta, getBBoxFromWKT } from './utils.js';
+import { requireAuth } from './auth.js';
 import { renderDataToLayer, actualizarColorPuntoByMedidor, handleCheckboxChange, setArbaToWMS } from './map.js';
 import { 
     populateLocalidadSelect, 
@@ -456,6 +457,13 @@ export async function updateEstado(safeKey, medidor) {
     if (!select || !msgDiv) return;
 
     const nuevoEstado = select.value;
+
+    if (!requireAuth()) {
+        msgDiv.innerHTML = '🔒 Inicie sesión para guardar cambios';
+        msgDiv.style.color = '#721c24';
+        return;
+    }
+
     msgDiv.innerHTML = '⏳ Guardando...';
     msgDiv.style.color = '#856404';
 

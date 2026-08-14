@@ -63,30 +63,38 @@ export function createSuministroPopup(properties) {
     }
     content += `</div>`;
 
-    content += `
-        <div style="display:flex; gap:5px; margin-top:5px;">
-            <div style="flex:1;">
-                <label for="ruta-input-${safeKey}" style="font-size:11px; color:#555;">Nueva Ruta:</label>
-                <input type="text" id="ruta-input-${safeKey}" value="${ruta || ''}" style="width:100%; padding:4px; box-sizing:border-box;">
+    if (state.user) {
+        content += `
+            <div style="display:flex; gap:5px; margin-top:5px;">
+                <div style="flex:1;">
+                    <label for="ruta-input-${safeKey}" style="font-size:11px; color:#555;">Nueva Ruta:</label>
+                    <input type="text" id="ruta-input-${safeKey}" value="${ruta || ''}" style="width:100%; padding:4px; box-sizing:border-box;">
+                </div>
+                <div style="flex:1;">
+                    <label for="orden-input-${safeKey}" style="font-size:11px; color:#555;">Nuevo Orden:</label>
+                    <input type="number" id="orden-input-${safeKey}" value="${orden || ''}" min="1" style="width:100%; padding:4px; box-sizing:border-box;">
+                </div>
             </div>
-            <div style="flex:1;">
-                <label for="orden-input-${safeKey}" style="font-size:11px; color:#555;">Nuevo Orden:</label>
-                <input type="number" id="orden-input-${safeKey}" value="${orden || ''}" min="1" style="width:100%; padding:4px; box-sizing:border-box;">
+            <button class="popup-save-btn" onclick="updateRutaOrden('${safeKey}', '${medidor}')" style="width:100%; margin-top:5px;">💾 Guardar</button>
+            <div id="popup-msg-ruta-${safeKey}" style="margin-top:5px; font-size:12px;"></div>
+            
+            <hr style="margin:8px 0; border-color:#ddd;">
+            <label for="estado-select-${safeKey}" style="font-weight:bold;">Cambiar estado:</label>
+            <select id="estado-select-${safeKey}" style="margin:5px 0; padding:5px; width:100%;">
+                <option value="activo" ${properties.estado_contrato === 'activo' ? 'selected' : ''}>🟢 Activo</option>
+                <option value="suspendido" ${properties.estado_contrato === 'suspendido' ? 'selected' : ''}>🔴 Suspendido</option>
+                <option value="baja" ${properties.estado_contrato === 'baja' ? 'selected' : ''}>🟡 Baja</option>
+            </select>
+            <button class="popup-save-btn" onclick="updateEstado('${safeKey}', '${medidor}')" style="width:100%;">💾 Guardar Estado</button>
+            <div id="popup-msg-${safeKey}" style="margin-top:5px; font-size:12px;"></div>
+        `;
+    } else {
+        content += `
+            <div style="margin-top:6px; font-size:11px; color:#555; background:#f1f1f1; border:1px solid #ddd; border-radius:4px; padding:6px 8px;">
+                🔒 Debe iniciar sesión en el panel de <strong>Acceso</strong> para editar ruta, orden o estado.
             </div>
-        </div>
-        <button class="popup-save-btn" onclick="updateRutaOrden('${safeKey}', '${medidor}')" style="width:100%; margin-top:5px;">💾 Guardar</button>
-        <div id="popup-msg-ruta-${safeKey}" style="margin-top:5px; font-size:12px;"></div>
-        
-        <hr style="margin:8px 0; border-color:#ddd;">
-        <label for="estado-select-${safeKey}" style="font-weight:bold;">Cambiar estado:</label>
-        <select id="estado-select-${safeKey}" style="margin:5px 0; padding:5px; width:100%;">
-            <option value="activo" ${properties.estado_contrato === 'activo' ? 'selected' : ''}>🟢 Activo</option>
-            <option value="suspendido" ${properties.estado_contrato === 'suspendido' ? 'selected' : ''}>🔴 Suspendido</option>
-            <option value="baja" ${properties.estado_contrato === 'baja' ? 'selected' : ''}>🟡 Baja</option>
-        </select>
-        <button class="popup-save-btn" onclick="updateEstado('${safeKey}', '${medidor}')" style="width:100%;">💾 Guardar Estado</button>
-        <div id="popup-msg-${safeKey}" style="margin-top:5px; font-size:12px;"></div>
-    `;
+        `;
+    }
     return content;
 }
 

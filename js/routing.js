@@ -1,6 +1,7 @@
 // Módulo de Gestión y Optimización de Rutas (Ruteo de Suministros)
 import { state } from './state.js';
 import { showStatus, obtenerColorRuta } from './utils.js';
+import { requireAuth } from './auth.js';
 import { renderDataToLayer, actualizarColorPuntoByMedidor } from './map.js';
 
 /**
@@ -78,6 +79,7 @@ export function renderPanelRuteo() {
     const yaAsignadosEnBorrador = new Set(state.borrador.map(b => String(b.medidor)));
     const sinAsignarCount = state.suministrosSinRuta.filter(s => !yaAsignadosEnBorrador.has(String(s.numero_medidor))).length;
     const hayBorrador = state.borrador.length > 0;
+    const authed = !!state.user;
 
     panel.innerHTML = `
         <h3>🗺️ Gestión de Rutas</h3>
@@ -130,23 +132,29 @@ export function renderPanelRuteo() {
         </div>
         ` : `<div style="font-size:0.82em; color:#888; margin-bottom:8px;">📭 No hay rutas asignadas</div>`}
         
-        ${sinAsignarCount > 0 ? `
-        <button id="ruteoModoEdicionBtn" class="filter-btn" style="background:${state.modoEdicion ? '#c0392b' : '#2980b9'}; margin-bottom:4px;">
-            ${state.modoEdicion ? '⏹ Salir de asignación' : '✏️ Asignar puntos sin ruta'}
-        </button>
-        ` : ''}
-        
-        ${hayBorrador ? `
-        <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:4px; padding:6px 8px; font-size:0.8em; margin-bottom:6px;">
-            <strong>⚠️ Borrador:</strong> ${state.borrador.length} cambio(s) pendiente(s)
-        </div>
-        <button id="ruteoConfirmarBtn" class="filter-btn" style="background:#27ae60; margin-bottom:3px;">
-            💾 Confirmar y guardar
-        </button>
-        <button id="ruteoDescartarBtn" class="filter-btn clear" style="margin-bottom:4px;">
-            ✗ Descartar cambios
-        </button>
-        ` : ''}
+        ${authed ? `
+            ${sinAsignarCount > 0 ? `
+            <button id="ruteoModoEdicionBtn" class="filter-btn" style="background:${state.modoEdicion ? '#c0392b' : '#2980b9'}; margin-bottom:4px;">
+                ${state.modoEdicion ? '⏹ Salir de asignación' : '✏️ Asignar puntos sin ruta'}
+            </button>
+            ` : ''}
+            
+            ${hayBorrador ? `
+            <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:4px; padding:6px 8px; font-size:0.8em; margin-bottom:6px;">
+                <strong>⚠️ Borrador:</strong> ${state.borrador.length} cambio(s) pendiente(s)
+            </div>
+            <button id="ruteoConfirmarBtn" class="filter-btn" style="background:#27ae60; margin-bottom:3px;">
+                💾 Confirmar y guardar
+            </button>
+            <button id="ruteoDescartarBtn" class="filter-btn clear" style="margin-bottom:4px;">
+                ✗ Descartar cambios
+            </button>
+            ` : ''}
+        ` : `
+            <div style="font-size:0.8em; color:#888; background:#f1f1f1; border:1px solid #ddd; border-radius:4px; padding:6px 8px; margin-bottom:6px;">
+                🔒 Inicie sesión en <strong>Acceso</strong> para asignar rutas y guardar cambios.
+            </div>
+        `}
     `;
 
     panel.style.display = 'block';
@@ -203,6 +211,7 @@ export function toggleVisibilidadRuta(ruta) {
 }
 
 export function toggleModoEdicion() {
+    if (!requireAuth()) return;
     state.modoEdicion = !state.modoEdicion;
 
     if (state.modoEdicion) {
@@ -426,6 +435,8 @@ export async function confirmarBorrador() {
         console.warn('⚠️ [confirmarBorrador] El borrador está vacío.');
         return;
     }
+
+    if (!requireAuth()) return;
 
     const btn = document.getElementById('ruteoConfirmarBtn');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Guardando...'; }

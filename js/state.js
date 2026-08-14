@@ -2,6 +2,7 @@
 
 export const state = {
     supabaseClient: null,
+    user: null,                  // Usuario autenticado (null = sesión cerrada)
     municipiosData: [],
     localidadesData: [],
     callesData: [],

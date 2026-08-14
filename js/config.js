@@ -3,6 +3,10 @@
 export const SUPABASE_URL = 'https://ahuxvjoykgzimshlcjsb.supabase.co';
 export const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFodXh2am95a2d6aW1zaGxjanNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNDAxODcsImV4cCI6MjA4NTYxNjE4N30.oI32sXf5PoQIRg9wz6thjEFPngvw7FwzN4_hxHLM3m4';
 
+// Permitir auto-registro de cuentas desde el formulario (false recomendado).
+// Los usuarios deben crearse en Supabase Dashboard > Authentication > Users.
+export const SUPABASE_ALLOW_SIGNUP = false;
+
 // ARBA WMS y WFS
 export const ARBA_WMS_URL = 'https://geo.arba.gov.ar/geoserver/idera/wms';
 export const ARBA_WMS_LAYER = 'idera:Parcela';
