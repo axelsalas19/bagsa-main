@@ -2,46 +2,50 @@
 --  RLS + Supabase Auth para el Geoportal BAGSA
 --  Ejecutar en: Supabase Dashboard -> SQL Editor -> New query -> Run
 -- =====================================================================
+--
+-- IMPORTANTE:
+--  - El RLS se aplica SOLO sobre tablas reales.
+--  - Las vistas (v_suministros_activos, localidades, municipios, etc.)
+--    NO se modifican: se dejan con su comportamiento original (el owner
+--    postgres las lee sin RLS), de modo que la carga de datos del mapa
+--    sigue funcionando igual que antes.
+--  - La protección de escritura (estado/ruta/orden) la garantiza la
+--    política UPDATE/INSERT de la tabla `suministros`, que es la única
+--    tabla sobre la que la app escribe.
 
--- 1) Habilitar RLS en TODAS las tablas utilizadas por el geoportal.
---    Las vistas NO soportan RLS directo en Postgres 14, pero se configuran
---    con security_invoker = true para que apliquen las políticas de las
---    tablas base (lectura pública, escritura solo autenticados).
+-- 1) Habilitar RLS en las tablas reales utilizadas por el geoportal.
 DO $$
 DECLARE
     obj RECORD;
 BEGIN
     FOR obj IN
-        SELECT c.relname, c.relkind
+        SELECT c.relname
         FROM pg_class c
         JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE n.nspname = 'public'
+          AND c.relkind IN ('r', 'p', 'f')   -- solo tablas reales (no vistas)
           AND c.relname IN (
               'municipios', 'localidades', 'suministros', 'parcelas',
-              'calles', 'red_de_gas', 'v_suministros_activos'
+              'calles', 'red_de_gas'
           )
     LOOP
-        IF obj.relkind IN ('v', 'm') THEN
-            EXECUTE format('ALTER VIEW %I SET (security_invoker = true)', obj.relname);
-        ELSE
-            EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', obj.relname);
-        END IF;
+        EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', obj.relname);
     END LOOP;
 END $$;
 
--- 2) Políticas sobre TABLAS (las vistas heredan vía security_invoker):
---      - Lectura pública (anon + authenticated).
+-- 2) Políticas sobre las tablas:
+--      - Lectura pública (anon + authenticated): el mapa sigue siendo público.
 --      - Escritura (UPDATE/INSERT) SOLO para usuarios autenticados en suministros.
 DO $$
 DECLARE
     obj RECORD;
 BEGIN
     FOR obj IN
-        SELECT c.relname, c.relkind
+        SELECT c.relname
         FROM pg_class c
         JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE n.nspname = 'public'
-          AND c.relkind IN ('r', 'p', 'f')   -- solo tablas reales
+          AND c.relkind IN ('r', 'p', 'f')
           AND c.relname IN (
               'municipios', 'localidades', 'suministros', 'parcelas',
               'calles', 'red_de_gas'

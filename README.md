@@ -16,11 +16,13 @@ Ejecutar el script completo en **Supabase Dashboard → SQL Editor → New query
 
 Esto hace lo siguiente:
 
-- Habilita `ROW LEVEL SECURITY` en: `municipios`, `localidades`, `suministros`,
-  `parcelas`, `calles`, `red_de_gas` y la vista `v_suministros_activos`
-  (las vistas se ponen en `security_invoker` para que hereden las políticas).
-- Política **SELECT público** (`anon` + `authenticated`) en todas → el mapa sigue
-  cargando sin login.
+- Habilita `ROW LEVEL SECURITY` solo en las **tablas reales**: `municipios`,
+  `localidades`, `suministros`, `parcelas`, `calles`, `red_de_gas`.
+- Las **vistas no se modifican**: `v_suministros_activos` y las demás vistas
+  conservan su comportamiento original (lectura por el owner sin RLS), por lo
+  que la carga de datos del mapa sigue funcionando igual.
+- Política **SELECT público** (`anon` + `authenticated`) en las tablas → el mapa
+  sigue cargando sin login.
 - Política **UPDATE/INSERT solo para `authenticated`** en `suministros` → solo
   usuarios con sesión pueden editar estado/ruta/orden.
 - Otorga `SELECT`/`EXECUTE` a `anon` y `authenticated` y deja las funciones RPC

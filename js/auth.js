@@ -50,14 +50,18 @@ function renderAuthUI() {
 export function initAuth() {
     if (!state.supabaseClient) return;
 
+    renderAuthUI();
+
     state.supabaseClient.auth.getSession()
         .then(({ data }) => {
+            console.log('🔑 Sesión restaurada:', data.session ? `usuario ${data.session.user.email}` : 'sin sesión');
             state.user = data.session?.user ?? null;
             renderAuthUI();
         })
         .catch(err => console.error('Error restaurando sesión:', err));
 
-    state.supabaseClient.auth.onAuthStateChange((_event, session) => {
+    state.supabaseClient.auth.onAuthStateChange((event, session) => {
+        console.log('🔑 Auth event:', event, session ? `usuario ${session.user.email}` : 'sin sesión');
         state.user = session?.user ?? null;
         renderAuthUI();
     });
@@ -81,12 +85,16 @@ async function handleLogin() {
     if (!email || !password) { setMsg('Ingrese email y contraseña.', '#721c24'); return; }
 
     setMsg('⏳ Iniciando sesión...', '#856404');
-    const { error } = await state.supabaseClient.auth.signInWithPassword({ email, password });
+    const { data, error } = await state.supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
-        console.error('Error de login:', error);
+        console.error('❌ Error de login:', error);
         setMsg('❌ ' + (error.message || 'No se pudo iniciar sesión.'), '#721c24');
+        showStatus('❌ No se pudo iniciar sesión: ' + (error.message || ''), 'error');
         return;
     }
+    console.log('✅ Login OK. Sesión:', data.session ? 'activa' : 'no devolvió sesión');
+    state.user = data.session?.user ?? null;
+    renderAuthUI();
     setMsg('');
     const pass = document.getElementById('authPassword');
     if (pass) pass.value = '';
