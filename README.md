@@ -45,6 +45,11 @@ Esto hace lo siguiente:
 - Para editar estado, ruta u orden: usar el panel **🔐 Acceso** en la barra lateral.
 - Sin sesión, los controles de edición en los popups y el panel de rutas quedan
   ocultos y las escrituras son rechazadas por el backend.
+- Al iniciar/cerrar sesión los controles de edición se actualizan al instante
+  (sin recargar la página).
+- La sesión es **efímera**: `persistSession: false` hace que NO quede guardada
+  al cerrar o recargar la página. Cada vez que se abre el geoportal hay que
+  volver a ingresar.
 
 ### Configuración
 

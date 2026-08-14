@@ -2,7 +2,7 @@
 import { state } from './state.js';
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 import { showStatus } from './utils.js';
-import { initAuth } from './auth.js';
+import { initAuth, onAuthChange } from './auth.js';
 import { initMap, initStyles, initLayerGroups, handleCheckboxChange } from './map.js';
 import { initSearchPanel } from './search.js';
 import { loadBaseData } from './db.js';
@@ -13,6 +13,21 @@ import {
     clearFilter 
 } from './filters.js';
 import { descargarReporteCSV, descargarCallesCSV } from './export.js';
+import { renderPanelRuteo } from './routing.js';
+import { createSuministroPopup } from './popups.js';
+
+/**
+ * Re-renderiza el popup de suministro abierto (para mostrar/ocultar controles de edición)
+ */
+function refrescarPopupAbierto() {
+    const map = state.map;
+    const popup = map && map._popup;
+    if (!popup || !map.hasLayer(popup)) return;
+    const source = popup._source;
+    if (source && source.feature && source.feature.properties && source.feature.properties.numero_medidor != null) {
+        popup.setContent(createSuministroPopup(source.feature.properties)).update();
+    }
+}
 
 /**
  * Inicializador principal de la aplicación
@@ -20,12 +35,24 @@ import { descargarReporteCSV, descargarCallesCSV } from './export.js';
 export function initApp() {
     try {
         // Inicializar cliente Supabase cargado globalmente en index.html
+        // persistSession: false → la sesión NO se guarda al cerrar/recargar la página
         const { createClient } = supabase;
-        state.supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+        state.supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: {
+                persistSession: false,
+                detectSessionInUrl: false
+            }
+        });
         console.log('Supabase conectado');
 
         // Inicializar autenticación (restaura sesión y vincula la UI de acceso)
         initAuth();
+
+        // Al iniciar/cerrar sesión, re-renderizar panel de rutas y popup abierto
+        onAuthChange(() => {
+            if (state.localidadFiltroActual) renderPanelRuteo();
+            refrescarPopupAbierto();
+        });
 
         // Inicializar componentes del mapa y estilos
         initMap();

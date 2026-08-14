@@ -11,6 +11,23 @@ export function getUser() {
     return state.user || null;
 }
 
+// Listeners que se ejecutan cada vez que cambia el estado de autenticación
+const authListeners = [];
+
+/**
+ * Registra un callback que se invoca al iniciar/cerrar sesión o restaurar sesión.
+ * Sirve para re-renderizar la UI (popups, panel de rutas) sin recargar la página.
+ */
+export function onAuthChange(cb) {
+    if (typeof cb === 'function') authListeners.push(cb);
+}
+
+function notifyAuthChange() {
+    authListeners.forEach(cb => {
+        try { cb(); } catch (e) { console.error('Error en onAuthChange:', e); }
+    });
+}
+
 function escapeHtml(str) {
     return String(str || '').replace(/[&<>"']/g, c => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -57,6 +74,7 @@ export function initAuth() {
             console.log('🔑 Sesión restaurada:', data.session ? `usuario ${data.session.user.email}` : 'sin sesión');
             state.user = data.session?.user ?? null;
             renderAuthUI();
+            notifyAuthChange();
         })
         .catch(err => console.error('Error restaurando sesión:', err));
 
@@ -64,6 +82,7 @@ export function initAuth() {
         console.log('🔑 Auth event:', event, session ? `usuario ${session.user.email}` : 'sin sesión');
         state.user = session?.user ?? null;
         renderAuthUI();
+        notifyAuthChange();
     });
 
     const loginBtn = document.getElementById('authLoginBtn');
@@ -95,6 +114,7 @@ async function handleLogin() {
     console.log('✅ Login OK. Sesión:', data.session ? 'activa' : 'no devolvió sesión');
     state.user = data.session?.user ?? null;
     renderAuthUI();
+    notifyAuthChange();
     setMsg('');
     const pass = document.getElementById('authPassword');
     if (pass) pass.value = '';
@@ -128,6 +148,9 @@ async function handleSignup() {
 async function handleLogout() {
     const { error } = await state.supabaseClient.auth.signOut();
     if (error) console.error('Error cerrando sesión:', error);
+    state.user = null;
+    renderAuthUI();
+    notifyAuthChange();
     setMsg('');
     showStatus('Sesión cerrada', 'success');
 }

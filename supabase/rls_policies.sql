@@ -13,7 +13,29 @@
 --    política UPDATE/INSERT de la tabla `suministros`, que es la única
 --    tabla sobre la que la app escribe.
 
--- 1) Habilitar RLS en las tablas reales utilizadas por el geoportal.
+-- 1) REVERTIR security_invoker en las vistas (por si un script anterior lo activó).
+--    Con security_invoker = false la vista la lee el owner (postgres) sin RLS,
+--    por lo que la carga de datos del mapa vuelve a funcionar como antes.
+DO $$
+DECLARE
+    obj RECORD;
+BEGIN
+    FOR obj IN
+        SELECT c.relname
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public'
+          AND c.relkind = 'v'   -- solo vistas
+          AND c.relname IN (
+              'municipios', 'localidades', 'suministros', 'parcelas',
+              'calles', 'red_de_gas', 'v_suministros_activos'
+          )
+    LOOP
+        EXECUTE format('ALTER VIEW %I SET (security_invoker = false)', obj.relname);
+    END LOOP;
+END $$;
+
+-- 2) Habilitar RLS en las tablas reales utilizadas por el geoportal.
 DO $$
 DECLARE
     obj RECORD;
@@ -33,7 +55,7 @@ BEGIN
     END LOOP;
 END $$;
 
--- 2) Políticas sobre las tablas:
+-- 3) Políticas sobre las tablas:
 --      - Lectura pública (anon + authenticated): el mapa sigue siendo público.
 --      - Escritura (UPDATE/INSERT) SOLO para usuarios autenticados en suministros.
 DO $$
@@ -74,12 +96,12 @@ BEGIN
     END LOOP;
 END $$;
 
--- 3) Asegurar permisos de lectura para los roles del cliente (mapa público)
+-- 4) Asegurar permisos de lectura para los roles del cliente (mapa público)
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon, authenticated;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated;
 
--- 4) Las funciones RPC de lectura se ejecutan con privilegios del definer
+-- 5) Las funciones RPC de lectura se ejecutan con privilegios del definer
 --    (postgres) para que sigan devolviendo geometrías con RLS activo.
 DO $$
 DECLARE
