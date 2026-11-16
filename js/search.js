@@ -58,6 +58,43 @@ export function initSearchPanel() {
 
     // Inicializar panel de indicadores
     initIndicadoresPanel();
+
+    // Configurar opciones de búsqueda según estado de autenticación inicial
+    actualizarOpcionesBusqueda();
+}
+
+/**
+ * Actualiza dinámicamente las opciones del selector de búsqueda según el estado de autenticación
+ */
+export function actualizarOpcionesBusqueda() {
+    const select = document.getElementById('searchField');
+    if (!select) return;
+
+    const valorAnterior = select.value;
+    select.innerHTML = '';
+
+    const optMedidor = document.createElement('option');
+    optMedidor.value = 'medidor';
+    optMedidor.textContent = 'Medidor';
+    select.appendChild(optMedidor);
+
+    const optClienteNum = document.createElement('option');
+    optClienteNum.value = 'numero_cliente';
+    optClienteNum.textContent = 'Cliente N°';
+    select.appendChild(optClienteNum);
+
+    if (state.user) {
+        const optNombre = document.createElement('option');
+        optNombre.value = 'Nombre';
+        optNombre.textContent = 'Nombre';
+        select.appendChild(optNombre);
+    }
+
+    if ([...select.options].some(o => o.value === valorAnterior)) {
+        select.value = valorAnterior;
+    } else {
+        select.value = 'medidor';
+    }
 }
 
 /**
@@ -206,12 +243,22 @@ export function buscarSuministro() {
         return; 
     }
 
-    const campoMap = { 'Nombre': 'cliente', 'medidor': 'numero_medidor', 'Cliente': 'cliente' };
+    const campoMap = { 
+        'Nombre': 'cliente', 
+        'medidor': 'numero_medidor', 
+        'numero_cliente': 'numero_cliente',
+        'Cliente': 'numero_cliente' 
+    };
     const campoReal = campoMap[campo] || campo;
+
+    if (!state.user && campoReal === 'cliente') {
+        if (resultsDiv) resultsDiv.innerHTML = '<div class="search-no-results">Inicie sesión para buscar por Nombre.</div>';
+        return;
+    }
     
     const todoEncontrado = state.suministrosData.filter(s => { 
         const valor = s[campoReal]; 
-        return valor && String(valor).toLowerCase().includes(texto); 
+        return valor != null && String(valor).toLowerCase().includes(texto); 
     });
     
     if (!resultsDiv) return;
@@ -270,10 +317,17 @@ function renderResultItem(item, container, otraLocalidad = null) {
     const orden = item.orden || '-';
     const colorRuta = (ruta && ruta !== '-') ? obtenerColorRuta(String(ruta)) : '#666';
 
+    // En versión pública se oculta el nombre/titular y se usa el Medidor como título principal
+    const tituloPrincipal = state.user 
+        ? (item.cliente || `Medidor: ${item.numero_medidor || '-'}`)
+        : `Medidor: ${item.numero_medidor || '-'}`;
+
+    const numClienteInfo = item.numero_cliente ? ` | Cliente N°: ${item.numero_cliente}` : '';
+
     const div = document.createElement('div');
     div.className = 'search-result-item';
-    div.innerHTML = `<div class="result-main">${item.cliente || item.numero_medidor || '-'}</div>
-        <div class="result-sub">🔢 Medidor: ${item.numero_medidor || '-'} | Estado: ${item.estado_contrato || '-'}</div>
+    div.innerHTML = `<div class="result-main">${tituloPrincipal}</div>
+        <div class="result-sub">🔢 Medidor: ${item.numero_medidor || '-'}${numClienteInfo} | Estado: ${item.estado_contrato || '-'}</div>
         <div class="result-sub">📭 Ruta: <span style="color:${colorRuta}; font-weight:bold;">${ruta}</span> | 🔜 Orden: ${orden}</div>
         <div class="result-sub">📍 ${item.direccion || ''}${otraLocalidad ? ` <em style="color:#856404">— ${otraLocalidad}</em>` : ''}</div>`;
     div.addEventListener('click', () => zoomASuministro(item));

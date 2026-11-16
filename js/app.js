@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 import { showStatus } from './utils.js';
 import { initAuth, onAuthChange } from './auth.js';
 import { initMap, initStyles, initLayerGroups, handleCheckboxChange } from './map.js';
-import { initSearchPanel } from './search.js';
+import { initSearchPanel, actualizarOpcionesBusqueda } from './search.js';
 import { loadBaseData } from './db.js';
 import { 
     applyLocalidadFilter, 
@@ -48,10 +48,11 @@ export function initApp() {
         // Inicializar autenticación (restaura sesión y vincula la UI de acceso)
         initAuth();
 
-        // Al iniciar/cerrar sesión, re-renderizar panel de rutas y popup abierto
+        // Al iniciar/cerrar sesión, re-renderizar panel de rutas, popup abierto y opciones de búsqueda
         onAuthChange(() => {
             if (state.localidadFiltroActual) renderPanelRuteo();
             refrescarPopupAbierto();
+            actualizarOpcionesBusqueda();
         });
 
         // Inicializar componentes del mapa y estilos

@@ -101,7 +101,9 @@ bagsa-main/
 - Soporte para deseleccionar y limpiar capas y restaurar el mapa al estado general sin pérdidas de datos en caché.
 
 ### 4.5 Búsquedas y Navegación (`js/search.js`)
-- **Búsqueda de Suministros:** Por Nombre de titular, Número de Medidor o Código de Cliente. Localiza el punto en el mapa, hace zoom centrado y abre el popup de atributos.
+- **Búsqueda de Suministros Dinámica por Nivel de Acceso:**
+  - *Versión Pública (sin sesión):* El selector `#searchField` únicamente permite buscar por criterios técnicos: `Medidor` (`numero_medidor`) y `Cliente N°` (`numero_cliente`). Se elimina la opción de búsqueda por `Nombre` (titular `cliente`) para proteger datos personales. En la lista de resultados (`searchResults`), el título principal de cada tarjeta muestra el número de `Medidor` y se omite el nombre/titular.
+  - *Versión Autenticada (con sesión):* Tras iniciar sesión (`onAuthChange` invoca `actualizarOpcionesBusqueda`), se incorpora dinámicamente la opción `Nombre` para buscar por titular (`cliente`), y las tarjetas de resultados presentan el nombre/titular como encabezado principal.
 - **Búsqueda por Ruta y Orden:** Permite ubicar suministros específicos filtrando por su índice de recorrido logístico.
 - **Búsqueda de Calles:** Input conectado a un `datalist` con autocompletado en base a las calles de la localidad seleccionada. Al seleccionar una calle, resalta la geometría en el mapa y encuadra la vista.
 
@@ -183,7 +185,8 @@ Este registro audita cronológicamente la evolución del repositorio. Todo commi
 | `796b027` | 2026-08-13 21:26:37 -0300 | axelsalas19 | `Merge branch 'main' of https://github.com/axelsalas19/bagsa-main` | Sincronización e integración de ramas remotas de trabajo. |
 | `1615023` | 2026-08-13 21:38:56 -0300 | axelsalas19 | `fix_auth` | Ajustes en las políticas de RLS SQL para mantener las vistas públicas sin invoker conflictivo y parametrización de persistencia efímera de sesión en Supabase. |
 | `9a7a310` | 2026-08-14 00:39:57 -0300 | axelsalas19 | `auth_fix` | Refuerzo de la sesión efímera (`persistSession: false`), actualización reactiva en caliente de popups abiertos (`refrescarPopupAbierto`) y panel de ruteo ante eventos de login/logout sin recargar la página. |
-| `Pendiente` | 2026-11-16 | - | `feat(security): ocultar nombre de cliente en popup público` | Modificación de `js/popups.js` para ocultar el campo `cliente` (nombre/titular) en el popup de suministros a usuarios sin sesión (`!state.user`), manteniendo visible el `numero_cliente` e información técnica. El dato se revela al iniciar sesión. Actualización de `contrato.md`. |
+| `3bd7769` | 2026-11-16 12:08:58 -0300 | axelsalas19 | `contrato y cambio popup suministros` | Incorporación inicial de `contrato.md` como Fuente de la Verdad y modificación de `js/popups.js` para ocultar el campo `cliente` (nombre/titular) en el popup de suministros a usuarios sin sesión (`!state.user`), conservando `numero_cliente` y `numero_medidor`. |
+| `Pendiente` | 2026-11-16 | - | `feat(security): privacidad en buscador de suministros` | 1) `index.html`, `js/search.js` y `js/app.js`: en la versión pública del buscador se remueve la opción de búsqueda por «Nombre» (`cliente`), dejando exclusivamente «Medidor» y «Cliente N°» (`numero_cliente`), y se oculta el nombre/titular en las tarjetas de resultados mostrando el Medidor en el encabezado. Al iniciar sesión se habilita la búsqueda y visualización por Nombre mediante `actualizarOpcionesBusqueda()`.<br>2) Bloqueo defensivo en `buscarSuministro()` para impedir búsquedas por nombre sin sesión activa.<br>3) Actualización de `contrato.md`. |
 
 ---
 
