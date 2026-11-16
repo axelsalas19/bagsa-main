@@ -42,7 +42,7 @@ export function createSuministroPopup(properties) {
         </div>`;
     }
     if (properties.numero_medidor) content += `<strong>Medidor:</strong> ${properties.numero_medidor}${getCopyBtn(properties.numero_medidor, 'Medidor')}${ properties.numero_cliente ? ` &nbsp;|&nbsp; <strong>Cliente N°:</strong> ${properties.numero_cliente}${getCopyBtn(properties.numero_cliente, 'Num. Cliente')}` : ''}<br>`;
-    if (properties.cliente) content += `<strong>Cliente:</strong> ${properties.cliente}${getCopyBtn(properties.cliente, 'Cliente')}<br>`;
+    if (state.user && properties.cliente) content += `<strong>Cliente:</strong> ${properties.cliente}${getCopyBtn(properties.cliente, 'Cliente')}<br>`;
     if (properties.categoria) content += `<strong>Categoría:</strong> ${properties.categoria}<br>`;
     if (properties.direccion) content += `<strong>Dirección:</strong> ${properties.direccion}${getCopyBtn(properties.direccion, 'Dirección')}<br>`;
     if (properties.Direccion) content += `<strong>Dirección:</strong> ${properties.Direccion}${getCopyBtn(properties.Direccion, 'Dirección')}<br>`;
