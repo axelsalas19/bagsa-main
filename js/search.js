@@ -2,6 +2,7 @@
 import { state } from './state.js';
 import { wktToGeoJSON, obtenerColorRuta, showStatus } from './utils.js';
 import { initIndicadoresPanel } from './kpis.js';
+import { createSuministroPopup } from './popups.js';
 
 // Estado local de resaltado activo de suministro buscado
 let _highlightRestore = null;  // función para restaurar el estilo original
@@ -258,7 +259,18 @@ export function buscarSuministro() {
     
     const todoEncontrado = state.suministrosData.filter(s => { 
         const valor = s[campoReal]; 
-        return valor != null && String(valor).toLowerCase().includes(texto); 
+        if (valor == null) return false;
+
+        // Para N° de Cliente, búsqueda por coincidencia exacta (numérica o texto limpio)
+        if (campoReal === 'numero_cliente') {
+            const txt = texto.trim();
+            const val = String(valor).trim();
+            return (!isNaN(Number(txt)) && !isNaN(Number(val)))
+                ? Number(val) === Number(txt)
+                : val.toLowerCase() === txt.toLowerCase();
+        }
+
+        return String(valor).toLowerCase().includes(texto); 
     });
     
     if (!resultsDiv) return;
@@ -456,6 +468,13 @@ export function zoomASuministro(item) {
 
     if (!latlng) return;
 
+    // Asegurar que la capa de suministros esté activa y visible en el mapa
+    if (state.layerGroups.suministros && !state.map.hasLayer(state.layerGroups.suministros)) {
+        state.layerGroups.suministros.addTo(state.map);
+        const cb = document.getElementById('layer-suministros');
+        if (cb) cb.checked = true;
+    }
+
     state.map.setView(latlng, 18);
 
     _cancelarResaltadoSuministro();
@@ -473,14 +492,16 @@ export function zoomASuministro(item) {
             const props = circleLayer.feature && circleLayer.feature.properties;
             if (!props) return;
 
-            // Único criterio válido cuando existe numero_cliente: NO hay fallback a coords.
-            const coincideCliente = clienteBuscado && String(props.numero_cliente) === clienteBuscado;
+            // Prioridad 1: número de medidor (clave unívoca del punto en el mapa)
+            const coincideMedidor = medidorBuscado && String(props.numero_medidor) === medidorBuscado;
 
-            // Fallback solo si el item buscado no trae numero_cliente
-            const coincideMedidor = !clienteBuscado && medidorBuscado && String(props.numero_medidor) === medidorBuscado;
-            const coincideCoords = !clienteBuscado && !coincideMedidor && circleLayer.getLatLng().distanceTo(latlng) < 5;
+            // Prioridad 2: número de cliente (si no se halló por medidor)
+            const coincideCliente = !coincideMedidor && clienteBuscado && String(props.numero_cliente) === clienteBuscado;
 
-            if (!coincideCliente && !coincideMedidor && !coincideCoords) return;
+            // Prioridad 3: proximidad espacial por coordenadas (fallback)
+            const coincideCoords = !coincideMedidor && !coincideCliente && circleLayer.getLatLng().distanceTo(latlng) < 5;
+
+            if (!coincideMedidor && !coincideCliente && !coincideCoords) return;
 
             encontradoFlag = true;
             setTimeout(() => {
@@ -516,4 +537,13 @@ export function zoomASuministro(item) {
             }, 350);
         });
     });
+
+    // Si no se encontró ningún circleLayer en la capa actual (p. ej. suministro de otra localidad filtrada),
+    // abrir un popup directamente sobre las coordenadas del suministro
+    if (!encontradoFlag) {
+        L.popup({ autoClose: true, closeOnClick: true })
+            .setLatLng(latlng)
+            .setContent(createSuministroPopup(item))
+            .openOn(state.map);
+    }
 }
