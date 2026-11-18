@@ -342,7 +342,7 @@ function renderResultItem(item, container, otraLocalidad = null) {
         <div class="result-sub">🔢 Medidor: ${item.numero_medidor || '-'}${numClienteInfo} | Estado: ${item.estado_contrato || '-'}</div>
         <div class="result-sub">📭 Ruta: <span style="color:${colorRuta}; font-weight:bold;">${ruta}</span> | 🔜 Orden: ${orden}</div>
         <div class="result-sub">📍 ${item.direccion || ''}${otraLocalidad ? ` <em style="color:#856404">— ${otraLocalidad}</em>` : ''}</div>`;
-    div.addEventListener('click', () => zoomASuministro(item));
+    div.addEventListener('click', (e) => { e.stopPropagation(); zoomASuministro(item); });
     container.appendChild(div);
 }
 
@@ -466,7 +466,14 @@ export function zoomASuministro(item) {
         }
     }
 
-    if (!latlng) return;
+    if (!latlng) {
+        showStatus('El suministro no posee coordenadas registradas en el sistema', 'warning');
+        return;
+    }
+
+    // Cancelar resaltado previo ANTES de mover el mapa para evitar que el
+    // event de setView active listeners residuales del highlight anterior
+    _cancelarResaltadoSuministro();
 
     // Asegurar que la capa de suministros esté activa y visible en el mapa
     if (state.layerGroups.suministros && !state.map.hasLayer(state.layerGroups.suministros)) {
@@ -477,10 +484,10 @@ export function zoomASuministro(item) {
 
     state.map.setView(latlng, 18);
 
-    _cancelarResaltadoSuministro();
-
-    const medidorBuscado = item.numero_medidor != null ? String(item.numero_medidor) : null;
-    const clienteBuscado = item.numero_cliente != null ? String(item.numero_cliente) : null;
+    // Normalización de valores para comparación robusta (trim + control de null/undefined)
+    const norm = (v) => (v != null ? String(v).trim() : '');
+    const medidorBuscado = norm(item.numero_medidor) || null;
+    const clienteBuscado = norm(item.numero_cliente) || null;
     let encontradoFlag = false;
 
     state.layerGroups.suministros.eachLayer(function (geoJsonLayer) {
@@ -493,13 +500,13 @@ export function zoomASuministro(item) {
             if (!props) return;
 
             // Prioridad 1: número de medidor (clave unívoca del punto en el mapa)
-            const coincideMedidor = medidorBuscado && String(props.numero_medidor) === medidorBuscado;
+            const coincideMedidor = medidorBuscado && norm(props.numero_medidor) === medidorBuscado;
 
             // Prioridad 2: número de cliente (si no se halló por medidor)
-            const coincideCliente = !coincideMedidor && clienteBuscado && String(props.numero_cliente) === clienteBuscado;
+            const coincideCliente = !coincideMedidor && clienteBuscado && norm(props.numero_cliente) === clienteBuscado;
 
-            // Prioridad 3: proximidad espacial por coordenadas (fallback)
-            const coincideCoords = !coincideMedidor && !coincideCliente && circleLayer.getLatLng().distanceTo(latlng) < 5;
+            // Prioridad 3: proximidad espacial por coordenadas (fallback ampliado a 15 m)
+            const coincideCoords = !coincideMedidor && !coincideCliente && circleLayer.getLatLng().distanceTo(latlng) < 15;
 
             if (!coincideMedidor && !coincideCliente && !coincideCoords) return;
 
