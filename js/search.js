@@ -177,7 +177,7 @@ export function buscarCalle() {
     });
     
     if (encontradas.length > 15) {
-        resultsDiv.innerHTML += `<div class="search-no-results">Mostrando 15 de ${encontradas.length} calles.</div>`;
+        resultsDiv.insertAdjacentHTML('beforeend', `<div class="search-no-results">Mostrando 15 de ${encontradas.length} calles.</div>`);
     }
 }
 
@@ -302,14 +302,14 @@ export function buscarSuministro() {
     if (enFiltro.length > 0) {
         enFiltro.slice(0, 20).forEach(item => renderResultItem(item, resultsDiv));
         if (enFiltro.length > 20) {
-            resultsDiv.innerHTML += '<div class="search-no-results">Mostrando 20 de ' + enFiltro.length + ' resultados.</div>';
+            resultsDiv.insertAdjacentHTML('beforeend', '<div class="search-no-results">Mostrando 20 de ' + enFiltro.length + ' resultados.</div>');
         }
     } else if (state.currentFilter && state.currentFilter.num_fimm && state.currentFilter.num_fimm.length > 0) {
         resultsDiv.innerHTML = '<div class="search-no-results">No se encontró en ' + state.currentFilter.name + '.</div>';
     }
     
     if (enOtra.length > 0) {
-        resultsDiv.innerHTML += '<div style="font-size:11px; color:#856404; background:#fff3cd; padding:5px; margin-top:6px;">⚠️ ' + enOtra.length + ' resultado(s) en otra localidad:</div>';
+        resultsDiv.insertAdjacentHTML('beforeend', '<div style="font-size:11px; color:#856404; background:#fff3cd; padding:5px; margin-top:6px;">⚠️ ' + enOtra.length + ' resultado(s) en otra localidad:</div>');
         enOtra.slice(0, 5).forEach(item => {
             const loc = state.localidadesData.find(l => l.nombre === item.localidad);
             renderResultItem(item, resultsDiv, loc ? loc.nombre : (item.localidad || 'Otra localidad'));
@@ -319,7 +319,7 @@ export function buscarSuministro() {
     if (!state.currentFilter || !state.currentFilter.num_fimm || state.currentFilter.num_fimm.length === 0) {
         todoEncontrado.slice(0, 20).forEach(item => renderResultItem(item, resultsDiv));
         if (todoEncontrado.length > 20) {
-            resultsDiv.innerHTML += '<div class="search-no-results">Mostrando 20 de ' + todoEncontrado.length + ' resultados.</div>';
+            resultsDiv.insertAdjacentHTML('beforeend', '<div class="search-no-results">Mostrando 20 de ' + todoEncontrado.length + ' resultados.</div>');
         }
     }
 }
@@ -411,7 +411,7 @@ export function buscarPorRutaOrden() {
         enFiltro.slice(0, 50).forEach(item => renderResultItem(item, resultsDiv));
     }
     if (enOtra.length > 0) {
-        resultsDiv.innerHTML += `<div class="search-no-results">⚠️ ${enOtra.length} resultado(s) en otra localidad:</div>`;
+        resultsDiv.insertAdjacentHTML('beforeend', `<div class="search-no-results">⚠️ ${enOtra.length} resultado(s) en otra localidad:</div>`);
         enOtra.slice(0, 20).forEach(item => {
             const loc = state.localidadesData.find(l => l.nombre === item.localidad);
             renderResultItem(item, resultsDiv, loc ? loc.nombre : (item.localidad || 'Otra localidad'));
